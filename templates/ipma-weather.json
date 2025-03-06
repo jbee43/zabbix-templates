@@ -1,0 +1,506 @@
+{
+  "zabbix_export": {
+    "version": "7.2",
+    "template_groups": [
+      {
+        "uuid": "7df96b18c230490a9a0a9e2307226338",
+        "name": "Templates"
+      }
+    ],
+    "templates": [
+      {
+        "uuid": "127a40f2c1c949ea84668df3c48dee21",
+        "template": "Weather by IPMA API",
+        "name": "Weather by IPMA API",
+        "groups": [
+          {
+            "name": "Templates"
+          }
+        ],
+        "items": [
+          {
+            "uuid": "7d5c21c312c74f2a923a98bdb63d61aa",
+            "name": "Get daily forecast by location up to 5 days",
+            "type": "HTTP_AGENT",
+            "key": "ipma.get.forecast.5days.location",
+            "delay": "10m",
+            "history": "0",
+            "value_type": "TEXT",
+            "preprocessing": [
+              {
+                "type": "JSONPATH",
+                "parameters": ["$.data"]
+              }
+            ],
+            "url": "https://api.ipma.pt/open-data/forecast/meteorology/cities/daily/{$GLOBAL.ID.LOCAL}.json",
+            "follow_redirects": "NO",
+            "verify_peer": "YES",
+            "verify_host": "YES"
+          },
+          {
+            "uuid": "7c634397800446b9be8293885d40e8c7",
+            "name": "Get weather warnings up to 3 days",
+            "type": "HTTP_AGENT",
+            "key": "ipma.get.warnings.3days",
+            "delay": "10m",
+            "history": "0",
+            "value_type": "TEXT",
+            "url": "https://api.ipma.pt/open-data/forecast/warnings/warnings_www.json",
+            "follow_redirects": "NO",
+            "verify_peer": "YES",
+            "verify_host": "YES"
+          }
+        ],
+        "discovery_rules": [
+          {
+            "uuid": "59dc1ccdb0c4478c82165f23bc51500c",
+            "name": "Daily forecast by location up to 5 days discovery",
+            "type": "DEPENDENT",
+            "key": "ipma.get.forecast.5days.location.discovery",
+            "lifetime": "1h",
+            "item_prototypes": [
+              {
+                "uuid": "ccf315ff839c41578788faf62271dabe",
+                "name": "Forecast {#DATE} rain probability",
+                "type": "DEPENDENT",
+                "key": "ipma.get.forecast.5days.location.rain[{#DATE}]",
+                "value_type": "FLOAT",
+                "units": "%",
+                "preprocessing": [
+                  {
+                    "type": "JSONPATH",
+                    "parameters": [
+                      "$[?(@.forecastDate==\"{#DATE}\")].precipitaProb.first()"
+                    ]
+                  }
+                ],
+                "master_item": {
+                  "key": "ipma.get.forecast.5days.location"
+                },
+                "trigger_prototypes": [
+                  {
+                    "uuid": "9dc7904a888e4b01a5b9714c1d20a833",
+                    "expression": "last(/Weather by IPMA API/ipma.get.forecast.5days.location.rain[{#DATE}]) > 50",
+                    "name": "Forecast {#DATE} rain probability above 50%",
+                    "opdata": "Last: {ITEM.LASTVALUE1}",
+                    "priority": "INFO"
+                  }
+                ]
+              },
+              {
+                "uuid": "662215e940f14ee18e78bdd7c72cb295",
+                "name": "Forecast {#DATE} temperature max.",
+                "type": "DEPENDENT",
+                "key": "ipma.get.forecast.5days.location.temperature.max[{#DATE}]",
+                "value_type": "FLOAT",
+                "units": "\u00ba C",
+                "preprocessing": [
+                  {
+                    "type": "JSONPATH",
+                    "parameters": [
+                      "$[?(@.forecastDate==\"{#DATE}\")].tMax.first()"
+                    ]
+                  }
+                ],
+                "master_item": {
+                  "key": "ipma.get.forecast.5days.location"
+                },
+                "trigger_prototypes": [
+                  {
+                    "uuid": "c41a7903f5df4474abe2ab60034a8d4c",
+                    "expression": "last(/Weather by IPMA API/ipma.get.forecast.5days.location.temperature.max[{#DATE}]) > 40",
+                    "name": "Forecast {#DATE} temperature max. above 40 \u00ba C",
+                    "opdata": "Last: {ITEM.LASTVALUE1}",
+                    "priority": "AVERAGE"
+                  }
+                ]
+              },
+              {
+                "uuid": "8646ea63413347358084a4e3923ead4a",
+                "name": "Forecast {#DATE} temperature min.",
+                "type": "DEPENDENT",
+                "key": "ipma.get.forecast.5days.location.temperature.min[{#DATE}]",
+                "value_type": "FLOAT",
+                "units": "\u00ba C",
+                "preprocessing": [
+                  {
+                    "type": "JSONPATH",
+                    "parameters": [
+                      "$[?(@.forecastDate==\"{#DATE}\")].tMin.first()"
+                    ]
+                  }
+                ],
+                "master_item": {
+                  "key": "ipma.get.forecast.5days.location"
+                },
+                "trigger_prototypes": [
+                  {
+                    "uuid": "6b2c6bbadba140558221c57b6c76323e",
+                    "expression": "last(/Weather by IPMA API/ipma.get.forecast.5days.location.temperature.min[{#DATE}]) < 1",
+                    "name": "Forecast {#DATE} temperature min. below 1 \u00ba C",
+                    "opdata": "Last: {ITEM.LASTVALUE1}",
+                    "priority": "AVERAGE"
+                  }
+                ]
+              },
+              {
+                "uuid": "cc309eb6ba1144bc92e9cb4609f2237f",
+                "name": "Forecast {#DATE} weather type",
+                "type": "DEPENDENT",
+                "key": "ipma.get.forecast.5days.location.weather.type[{#DATE}]",
+                "value_type": "TEXT",
+                "preprocessing": [
+                  {
+                    "type": "JSONPATH",
+                    "parameters": [
+                      "$[?(@.forecastDate==\"{#DATE}\")].idWeatherType.first()"
+                    ]
+                  },
+                  {
+                    "type": "JAVASCRIPT",
+                    "parameters": [
+                      "var data = [\n\t{\n\t  \"descWeatherTypeEN\":\"--\",\n\t  \"descWeatherTypePT\":\"---\",\n\t  \"idWeatherType\":-99\n\t},\n\t{\n\t  \"descWeatherTypeEN\":\"No information\",\n\t  \"descWeatherTypePT\":\"Sem informa\\u00e7\\u00e3o\",\n\t  \"idWeatherType\":0\n\t},\n\t{\n\t  \"descWeatherTypeEN\":\"Clear sky\",\n\t  \"descWeatherTypePT\":\"C\\u00e9u limpo\",\n\t  \"idWeatherType\":1\n\t},\n\t{\n\t  \"descWeatherTypeEN\":\"Partly cloudy\",\n\t  \"descWeatherTypePT\":\"C\\u00e9u pouco nublado\",\n\t  \"idWeatherType\":2\n\t},\n\t{\n\t  \"descWeatherTypeEN\":\"Sunny intervals\",\n\t  \"descWeatherTypePT\":\"C\\u00e9u parcialmente nublado\",\n\t  \"idWeatherType\":3\n\t},\n\t{\n\t  \"descWeatherTypeEN\":\"Cloudy \",\n\t  \"descWeatherTypePT\":\"C\\u00e9u muito nublado ou encoberto\",\n\t  \"idWeatherType\":4\n\t},\n\t{\n\t  \"descWeatherTypeEN\":\"Cloudy (High cloud)\",\n\t  \"descWeatherTypePT\":\"C\\u00e9u nublado por nuvens altas\",\n\t  \"idWeatherType\":5\n\t},\n\t{\n\t  \"descWeatherTypeEN\":\"Showers/rain\",\n\t  \"descWeatherTypePT\":\"Aguaceiros/chuva\",\n\t  \"idWeatherType\":6\n\t},\n\t{\n\t  \"descWeatherTypeEN\":\"Light showers/rain\",\n\t  \"descWeatherTypePT\":\"Aguaceiros/chuva fracos\",\n\t  \"idWeatherType\":7\n\t},\n\t{\n\t  \"descWeatherTypeEN\":\"Heavy showers/rain\",\n\t  \"descWeatherTypePT\":\"Aguaceiros/chuva fortes\",\n\t  \"idWeatherType\":8\n\t},\n\t{\n\t  \"descWeatherTypeEN\":\"Rain/showers\",\n\t  \"descWeatherTypePT\":\"Chuva/aguaceiros\",\n\t  \"idWeatherType\":9\n\t},\n\t{\n\t  \"descWeatherTypeEN\":\"Light rain\",\n\t  \"descWeatherTypePT\":\"Chuva fraca ou chuvisco\",\n\t  \"idWeatherType\":10\n\t},\n\t{\n\t  \"descWeatherTypeEN\":\"Heavy rain/showers\",\n\t  \"descWeatherTypePT\":\"Chuva/aguaceiros forte\",\n\t  \"idWeatherType\":11\n\t},\n\t{\n\t  \"descWeatherTypeEN\":\"Intermittent rain\",\n\t  \"descWeatherTypePT\":\"Per\\u00edodos de chuva\",\n\t  \"idWeatherType\":12\n\t},\n\t{\n\t  \"descWeatherTypeEN\":\"Intermittent ligth rain\",\n\t  \"descWeatherTypePT\":\"Per\\u00edodos de chuva fraca\",\n\t  \"idWeatherType\":13\n\t},\n\t{\n\t  \"descWeatherTypeEN\":\"Intermittent heavy rain\",\n\t  \"descWeatherTypePT\":\"Per\\u00edodos de chuva forte\",\n\t  \"idWeatherType\":14\n\t},\n\t{\n\t  \"descWeatherTypeEN\":\"Drizzle\",\n\t  \"descWeatherTypePT\":\"Chuvisco\",\n\t  \"idWeatherType\":15\n\t},\n\t{\n\t  \"descWeatherTypeEN\":\"Mist\",\n\t  \"descWeatherTypePT\":\"Neblina\",\n\t  \"idWeatherType\":16\n\t},\n\t{\n\t  \"descWeatherTypeEN\":\"Fog\",\n\t  \"descWeatherTypePT\":\"Nevoeiro ou nuvens baixas\",\n\t  \"idWeatherType\":17\n\t},\n\t{\n\t  \"descWeatherTypeEN\":\"Snow\",\n\t  \"descWeatherTypePT\":\"Neve\",\n\t  \"idWeatherType\":18\n\t},\n\t{\n\t  \"descWeatherTypeEN\":\"Thunderstorms\",\n\t  \"descWeatherTypePT\":\"Trovoada\",\n\t  \"idWeatherType\":19\n\t},\n\t{\n\t  \"descWeatherTypeEN\":\"Showers and thunderstorms\",\n\t  \"descWeatherTypePT\":\"Aguaceiros e possibilidade de trovoada\",\n\t  \"idWeatherType\":20\n\t},\n\t{\n\t  \"descWeatherTypeEN\":\"Hail\",\n\t  \"descWeatherTypePT\":\"Granizo\",\n\t  \"idWeatherType\":21\n\t},\n\t{\n\t  \"descWeatherTypeEN\":\"Frost\",\n\t  \"descWeatherTypePT\":\"Geada\",\n\t  \"idWeatherType\":22\n\t},\n\t{\n\t  \"descWeatherTypeEN\":\"Rain and thunderstorms\",\n\t  \"descWeatherTypePT\":\"Chuva e possibilidade de trovoada\",\n\t  \"idWeatherType\":23\n\t},\n\t{\n\t  \"descWeatherTypeEN\":\"Convective clouds\",\n\t  \"descWeatherTypePT\":\"Nebulosidade convectiva\",\n\t  \"idWeatherType\":24\n\t},\n\t{\n\t  \"descWeatherTypeEN\":\"Partly cloudy\",\n\t  \"descWeatherTypePT\":\"C\\u00e9u com per\\u00edodos de muito nublado\",\n\t  \"idWeatherType\":25\n\t},\n\t{\n\t  \"descWeatherTypeEN\":\"Fog\",\n\t  \"descWeatherTypePT\":\"Nevoeiro\",\n\t  \"idWeatherType\":26\n\t},\n\t{\n\t  \"descWeatherTypeEN\":\"Cloudy\",\n\t  \"descWeatherTypePT\":\"C\\u00e9u nublado\",\n\t  \"idWeatherType\":27\n\t},\n\t{\n\t  \"descWeatherTypeEN\":\"Snow showers\",\n\t  \"descWeatherTypePT\":\"Aguaceiros de neve\",\n\t  \"idWeatherType\":28\n\t},\n\t{\n\t  \"descWeatherTypeEN\":\"Rain and snow\",\n\t  \"descWeatherTypePT\":\"Chuva e Neve\",\n\t  \"idWeatherType\":29\n\t},\n\t{\n\t  \"descWeatherTypeEN\":\"Rain and snow\",\n\t  \"descWeatherTypePT\":\"Chuva e Neve\",\n\t  \"idWeatherType\":30\n\t}\n];\n\nfor (var i = 0; i < data.length; i++) {\n\t\n\tif (value == data[i].idWeatherType) {\n\t\t\n\t\treturn data[i].descWeatherTypeEN;\n\t}\n}\n\nreturn \"\";"
+                    ]
+                  }
+                ],
+                "master_item": {
+                  "key": "ipma.get.forecast.5days.location"
+                }
+              },
+              {
+                "uuid": "27222feb1aef4f92b9c853eb94b6346d",
+                "name": "Forecast {#DATE} wind direction",
+                "type": "DEPENDENT",
+                "key": "ipma.get.forecast.5days.location.wind.direction[{#DATE}]",
+                "value_type": "CHAR",
+                "preprocessing": [
+                  {
+                    "type": "JSONPATH",
+                    "parameters": [
+                      "$[?(@.forecastDate==\"{#DATE}\")].predWindDir.first()"
+                    ]
+                  }
+                ],
+                "master_item": {
+                  "key": "ipma.get.forecast.5days.location"
+                }
+              },
+              {
+                "uuid": "0796ba5f86874179b9f1b593434379f2",
+                "name": "Forecast {#DATE} wind speed",
+                "type": "DEPENDENT",
+                "key": "ipma.get.forecast.5days.location.wind.speed[{#DATE}]",
+                "value_type": "TEXT",
+                "preprocessing": [
+                  {
+                    "type": "JSONPATH",
+                    "parameters": [
+                      "$[?(@.forecastDate==\"{#DATE}\")].classWindSpeed.first()"
+                    ]
+                  },
+                  {
+                    "type": "JAVASCRIPT",
+                    "parameters": [
+                      "var data = [\n\t{\n\t\t\"descClassWindSpeedDailyEN\": \"--\",\n\t\t\"descClassWindSpeedDailyPT\": \"---\",\n\t\t\"classWindSpeed\": \"-99\"\n\t},\n    {\n\t\t\"descClassWindSpeedDailyEN\": \"Weak\",\n\t\t\"descClassWindSpeedDailyPT\": \"Fraco\",\n\t\t\"classWindSpeed\": \"1\"\n\t},\n    {\n\t\t\"descClassWindSpeedDailyEN\": \"Moderate\",\n\t\t\"descClassWindSpeedDailyPT\": \"Moderado\",\n\t\t\"classWindSpeed\": \"2\"\n\t},\n    {\n\t\t\"descClassWindSpeedDailyEN\": \"Strong\",\n\t\t\"descClassWindSpeedDailyPT\": \"Forte\",\n\t\t\"classWindSpeed\": \"3\"\n\t},\n    {\n\t\t\"descClassWindSpeedDailyEN\": \"Very strong\",\n\t\t\"descClassWindSpeedDailyPT\": \"Muito forte\",\n\t\t\"classWindSpeed\": \"4\"\n\t}\n];\n\nfor (var i = 0; i < data.length; i++) {\n\t\n\tif (value == data[i].classWindSpeed) {\n\t\t\n\t\treturn data[i].descClassWindSpeedDailyEN;\n\t}\n}\n\nreturn \"\";"
+                    ]
+                  }
+                ],
+                "master_item": {
+                  "key": "ipma.get.forecast.5days.location"
+                },
+                "trigger_prototypes": [
+                  {
+                    "uuid": "2c9e0fabcaea4a2d844f41183cb19bc7",
+                    "expression": "last(/Weather by IPMA API/ipma.get.forecast.5days.location.wind.speed[{#DATE}]) = \"Strong\"",
+                    "name": "Forecast {#DATE} wind speed is strong",
+                    "priority": "WARNING"
+                  },
+                  {
+                    "uuid": "e6a2b95b5dda4b75abe77fd4ec29b514",
+                    "expression": "last(/Weather by IPMA API/ipma.get.forecast.5days.location.wind.speed[{#DATE}]) = \"Very strong\"",
+                    "name": "Forecast {#DATE} wind speed is very strong",
+                    "priority": "AVERAGE"
+                  }
+                ]
+              }
+            ],
+            "graph_prototypes": [
+              {
+                "uuid": "fa289a726a884c76892689832246da53",
+                "name": "Forecast {#DATE} rain probability",
+                "ymin_type_1": "FIXED",
+                "ymax_type_1": "FIXED",
+                "graph_items": [
+                  {
+                    "drawtype": "GRADIENT_LINE",
+                    "color": "7E57C2",
+                    "calc_fnc": "ALL",
+                    "item": {
+                      "host": "Weather by IPMA API",
+                      "key": "ipma.get.forecast.5days.location.rain[{#DATE}]"
+                    }
+                  }
+                ]
+              },
+              {
+                "uuid": "da92cb55478748779031bfa2b624fcf5",
+                "name": "Forecast {#DATE} temperatures",
+                "graph_items": [
+                  {
+                    "drawtype": "BOLD_LINE",
+                    "color": "B71C1C",
+                    "calc_fnc": "ALL",
+                    "item": {
+                      "host": "Weather by IPMA API",
+                      "key": "ipma.get.forecast.5days.location.temperature.max[{#DATE}]"
+                    }
+                  },
+                  {
+                    "sortorder": "1",
+                    "drawtype": "BOLD_LINE",
+                    "color": "01579B",
+                    "calc_fnc": "ALL",
+                    "item": {
+                      "host": "Weather by IPMA API",
+                      "key": "ipma.get.forecast.5days.location.temperature.min[{#DATE}]"
+                    }
+                  }
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "ipma.get.forecast.5days.location"
+            },
+            "lld_macro_paths": [
+              {
+                "lld_macro": "{#DATE}",
+                "path": "$.forecastDate"
+              }
+            ]
+          },
+          {
+            "uuid": "84a45dba74e442809ae967dd9f08af86",
+            "name": "Weather warnings up to 3 days discovery",
+            "type": "DEPENDENT",
+            "key": "ipma.get.warnings.3days.discovery",
+            "filter": {
+              "conditions": [
+                {
+                  "macro": "{#ID.AREA.AVISO}",
+                  "value": "{$ID.AREA.AVISO}"
+                }
+              ]
+            },
+            "item_prototypes": [
+              {
+                "uuid": "15ae762710ef495ca0bc1288dc0e501e",
+                "name": "Warning {#AWARENESS.TYPE.NAME} awareness",
+                "type": "DEPENDENT",
+                "key": "ipma.get.warnings.3days.awareness[{#AWARENESS.TYPE.NAME}]",
+                "value_type": "CHAR",
+                "preprocessing": [
+                  {
+                    "type": "JSONPATH",
+                    "parameters": [
+                      "$[?(@.awarenessTypeName==\"{#AWARENESS.TYPE.NAME}\")].awarenessLevelID.first()"
+                    ]
+                  }
+                ],
+                "master_item": {
+                  "key": "ipma.get.warnings.3days"
+                }
+              },
+              {
+                "uuid": "cdfff2acccf74165a5c4cfd06ccf98dc",
+                "name": "Warning {#AWARENESS.TYPE.NAME} end time",
+                "type": "DEPENDENT",
+                "key": "ipma.get.warnings.3days.endTime[{#AWARENESS.TYPE.NAME}]",
+                "trends": "0",
+                "units": "unixtime",
+                "preprocessing": [
+                  {
+                    "type": "JSONPATH",
+                    "parameters": [
+                      "$[?(@.awarenessTypeName==\"{#AWARENESS.TYPE.NAME}\")].endTime.first()"
+                    ]
+                  },
+                  {
+                    "type": "JAVASCRIPT",
+                    "parameters": ["return new Date(value).getTime() / 1000;"]
+                  }
+                ],
+                "master_item": {
+                  "key": "ipma.get.warnings.3days"
+                }
+              },
+              {
+                "uuid": "447b1949a2eb42a59b673b5fb7e569f8",
+                "name": "Warning {#AWARENESS.TYPE.NAME} start time",
+                "type": "DEPENDENT",
+                "key": "ipma.get.warnings.3days.startTime[{#AWARENESS.TYPE.NAME}]",
+                "trends": "0",
+                "units": "unixtime",
+                "preprocessing": [
+                  {
+                    "type": "JSONPATH",
+                    "parameters": [
+                      "$[?(@.awarenessTypeName==\"{#AWARENESS.TYPE.NAME}\")].startTime.first()"
+                    ]
+                  },
+                  {
+                    "type": "JAVASCRIPT",
+                    "parameters": ["return new Date(value).getTime() / 1000;"]
+                  }
+                ],
+                "master_item": {
+                  "key": "ipma.get.warnings.3days"
+                }
+              },
+              {
+                "uuid": "69552a90f0264731a070f5bd7ab0cf13",
+                "name": "Warning {#AWARENESS.TYPE.NAME} text",
+                "type": "DEPENDENT",
+                "key": "ipma.get.warnings.3days.text[{#AWARENESS.TYPE.NAME}]",
+                "value_type": "TEXT",
+                "preprocessing": [
+                  {
+                    "type": "JSONPATH",
+                    "parameters": [
+                      "$[?(@.awarenessTypeName==\"{#AWARENESS.TYPE.NAME}\")].text.first()"
+                    ]
+                  }
+                ],
+                "master_item": {
+                  "key": "ipma.get.warnings.3days"
+                }
+              }
+            ],
+            "trigger_prototypes": [
+              {
+                "uuid": "fe1bb6d54d084315b39077eb1e4f52a6",
+                "expression": "last(/Weather by IPMA API/ipma.get.warnings.3days.awareness[{#AWARENESS.TYPE.NAME}]) = \"red\" and last(/Weather by IPMA API/ipma.get.warnings.3days.startTime[{#AWARENESS.TYPE.NAME}]) < now() and last(/Weather by IPMA API/ipma.get.warnings.3days.endTime[{#AWARENESS.TYPE.NAME}]) > now()",
+                "name": "Warning {#AWARENESS.TYPE.NAME} awareness is high: {?last(//ipma.get.warnings.3days.text[{#AWARENESS.TYPE.NAME}])}",
+                "priority": "HIGH"
+              },
+              {
+                "uuid": "4fd4b2b1b0a34725a9b68d0f610dbe49",
+                "expression": "last(/Weather by IPMA API/ipma.get.warnings.3days.awareness[{#AWARENESS.TYPE.NAME}]) = \"orange\" and last(/Weather by IPMA API/ipma.get.warnings.3days.startTime[{#AWARENESS.TYPE.NAME}]) < now() and last(/Weather by IPMA API/ipma.get.warnings.3days.endTime[{#AWARENESS.TYPE.NAME}]) > now()",
+                "name": "Warning {#AWARENESS.TYPE.NAME} awareness is orange: {?last(//ipma.get.warnings.3days.text[{#AWARENESS.TYPE.NAME}])}",
+                "priority": "AVERAGE"
+              },
+              {
+                "uuid": "53c3891a7bc649be93f8b7d72bcfbe7d",
+                "expression": "last(/Weather by IPMA API/ipma.get.warnings.3days.awareness[{#AWARENESS.TYPE.NAME}]) = \"yellow\" and last(/Weather by IPMA API/ipma.get.warnings.3days.startTime[{#AWARENESS.TYPE.NAME}]) < now() and last(/Weather by IPMA API/ipma.get.warnings.3days.endTime[{#AWARENESS.TYPE.NAME}]) > now()",
+                "name": "Warning {#AWARENESS.TYPE.NAME} awareness is yellow: {?last(//ipma.get.warnings.3days.text[{#AWARENESS.TYPE.NAME}])}",
+                "priority": "WARNING"
+              }
+            ],
+            "master_item": {
+              "key": "ipma.get.warnings.3days"
+            },
+            "lld_macro_paths": [
+              {
+                "lld_macro": "{#AWARENESS.TYPE.NAME}",
+                "path": "$.awarenessTypeName"
+              },
+              {
+                "lld_macro": "{#ID.AREA.AVISO}",
+                "path": "$.idAreaAviso"
+              }
+            ]
+          }
+        ],
+        "macros": [
+          {
+            "macro": "{$GLOBAL.ID.LOCAL}",
+            "value": "!!!CHANGEME!!!",
+            "description": "See https://api.ipma.pt/open-data/distrits-islands.json"
+          },
+          {
+            "macro": "{$ID.AREA.AVISO}",
+            "value": "!!!CHANGEME!!!",
+            "description": "See https://api.ipma.pt/open-data/distrits-islands.json"
+          }
+        ],
+        "dashboards": [
+          {
+            "uuid": "22d83d75ffe64bda9af2cd46b82c8bbe",
+            "name": "Weather",
+            "display_period": "10",
+            "auto_start": "NO",
+            "pages": [
+              {
+                "name": "Overview",
+                "widgets": [
+                  {
+                    "type": "graphprototype",
+                    "name": "Forecast temperatures",
+                    "width": "72",
+                    "height": "5",
+                    "fields": [
+                      {
+                        "type": "INTEGER",
+                        "name": "columns",
+                        "value": "3"
+                      },
+                      {
+                        "type": "GRAPH_PROTOTYPE",
+                        "name": "graphid.0",
+                        "value": {
+                          "host": "Weather by IPMA API",
+                          "name": "Forecast {#DATE} temperatures"
+                        }
+                      },
+                      {
+                        "type": "STRING",
+                        "name": "reference",
+                        "value": "MXUEZ"
+                      },
+                      {
+                        "type": "INTEGER",
+                        "name": "rf_rate",
+                        "value": "30"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "graphprototype",
+                    "name": "Forecast rain probabilities",
+                    "y": "5",
+                    "width": "72",
+                    "height": "5",
+                    "fields": [
+                      {
+                        "type": "INTEGER",
+                        "name": "columns",
+                        "value": "3"
+                      },
+                      {
+                        "type": "GRAPH_PROTOTYPE",
+                        "name": "graphid.0",
+                        "value": {
+                          "host": "Weather by IPMA API",
+                          "name": "Forecast {#DATE} rain probability"
+                        }
+                      },
+                      {
+                        "type": "STRING",
+                        "name": "reference",
+                        "value": "NGDZH"
+                      },
+                      {
+                        "type": "INTEGER",
+                        "name": "rf_rate",
+                        "value": "30"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

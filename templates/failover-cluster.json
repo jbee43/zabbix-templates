@@ -1,0 +1,375 @@
+{
+  "zabbix_export": {
+    "version": "7.2",
+    "template_groups": [
+      {
+        "uuid": "7df96b18c230490a9a0a9e2307226338",
+        "name": "Templates"
+      }
+    ],
+    "templates": [
+      {
+        "uuid": "0ff4a93be8a64ab3a163d003d75c5f6a",
+        "template": "Failover Cluster",
+        "name": "Failover Cluster",
+        "groups": [
+          {
+            "name": "Templates"
+          }
+        ],
+        "items": [
+          {
+            "uuid": "feeca109b25b45a1a39c826e6cfa85f6",
+            "name": "Cluster get JSON",
+            "type": "ZABBIX_ACTIVE",
+            "key": "cluster.json",
+            "delay": "2m",
+            "history": "0",
+            "value_type": "TEXT"
+          },
+          {
+            "uuid": "7faf9c9c71694e0c8a11d287671680ae",
+            "name": "Event Viewer Failover/Diagnostic",
+            "type": "ZABBIX_ACTIVE",
+            "key": "eventlog[Microsoft-Windows-FailoverClustering/Diagnostic,,,,^(2050|2051)$,10,skip]",
+            "delay": "2m",
+            "value_type": "LOG",
+            "preprocessing": [
+              {
+                "type": "MATCHES_REGEX",
+                "parameters": [
+                  "The state of the local availability replica in availability group"
+                ],
+                "error_handler": "DISCARD_VALUE"
+              }
+            ],
+            "triggers": [
+              {
+                "uuid": "f92b3c2d5cb74e8e8990b6c47de75388",
+                "expression": "nodata(/Failover Cluster/eventlog[Microsoft-Windows-FailoverClustering/Diagnostic,,,,^(2050|2051)$,10,skip], 1h) = 0",
+                "name": "Event Viewer Failover/Diagnostic at {ITEM.LOG.DATE} {ITEM.LOG.TIME}",
+                "opdata": "{ITEM.VALUE}",
+                "priority": "HIGH",
+                "manual_close": "YES",
+                "tags": [
+                  {
+                    "tag": "class",
+                    "value": "software"
+                  },
+                  {
+                    "tag": "devops",
+                    "value": "alert"
+                  },
+                  {
+                    "tag": "target",
+                    "value": "eventviewer"
+                  },
+                  {
+                    "tag": "twilio_call",
+                    "value": "asap"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "uuid": "6eb46771370f4e27b9ced202d7717e29",
+            "name": "Event Viewer Failover/Operational",
+            "type": "ZABBIX_ACTIVE",
+            "key": "eventlog[Microsoft-Windows-FailoverClustering/Operational,,,,1650,10,skip]",
+            "delay": "2m",
+            "value_type": "LOG",
+            "triggers": [
+              {
+                "uuid": "889ba0279f8d45babab48e981c593056",
+                "expression": "nodata(/Failover Cluster/eventlog[Microsoft-Windows-FailoverClustering/Operational,,,,1650,10,skip], 1h) = 0",
+                "name": "Event Viewer Failover/Operational at {ITEM.LOG.DATE} {ITEM.LOG.TIME}",
+                "opdata": "{ITEM.VALUE}",
+                "priority": "HIGH",
+                "manual_close": "YES",
+                "tags": [
+                  {
+                    "tag": "class",
+                    "value": "software"
+                  },
+                  {
+                    "tag": "devops",
+                    "value": "alert"
+                  },
+                  {
+                    "tag": "target",
+                    "value": "eventviewer"
+                  },
+                  {
+                    "tag": "twilio_call",
+                    "value": "asap"
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "discovery_rules": [
+          {
+            "uuid": "15867da95c6a45bb940c0ede689cf1d3",
+            "name": "Cluster nodes discovery",
+            "type": "DEPENDENT",
+            "key": "cluster.nodes.discovery",
+            "filter": {
+              "conditions": [
+                {
+                  "macro": "{#NAME}",
+                  "value": "{$CLUSTER.NODE.NOT_MATCHES}",
+                  "operator": "NOT_MATCHES_REGEX"
+                }
+              ]
+            },
+            "lifetime": "3d",
+            "item_prototypes": [
+              {
+                "uuid": "b219687af61d45fda8f0cec0e2625fc6",
+                "name": "Cluster node {#NAME} state",
+                "type": "DEPENDENT",
+                "key": "cluster.node.state[{#NAME}]",
+                "value_type": "CHAR",
+                "preprocessing": [
+                  {
+                    "type": "JSONPATH",
+                    "parameters": [
+                      "$.nodes[?(@.name==\"{#NAME}\")].state.first()"
+                    ]
+                  }
+                ],
+                "master_item": {
+                  "key": "cluster.json"
+                },
+                "trigger_prototypes": [
+                  {
+                    "uuid": "56bee84798ab40bcb3da6511c1af5f00",
+                    "expression": "last(/Failover Cluster/cluster.node.state[{#NAME}]) <> \"Up\"",
+                    "name": "Cluster node {#NAME} state is not healthy",
+                    "opdata": "{ITEM.LASTVALUE1}",
+                    "priority": "HIGH",
+                    "tags": [
+                      {
+                        "tag": "devops",
+                        "value": "alert"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "cluster.json"
+            },
+            "lld_macro_paths": [
+              {
+                "lld_macro": "{#NAME}",
+                "path": "$.name"
+              }
+            ],
+            "preprocessing": [
+              {
+                "type": "JSONPATH",
+                "parameters": ["$.nodes"]
+              }
+            ]
+          },
+          {
+            "uuid": "df865751c06b4a1ca0f7f0b951fe06a4",
+            "name": "Cluster resources discovery",
+            "type": "DEPENDENT",
+            "key": "cluster.resources.discovery",
+            "filter": {
+              "conditions": [
+                {
+                  "macro": "{#NAME}",
+                  "value": "{$CLUSTER.RESOURCE.NOT_MATCHES}",
+                  "operator": "NOT_MATCHES_REGEX"
+                }
+              ]
+            },
+            "lifetime": "3d",
+            "item_prototypes": [
+              {
+                "uuid": "aa216b711de945af853c817af8831c25",
+                "name": "Cluster resource {#NAME} owner node",
+                "type": "DEPENDENT",
+                "key": "cluster.resource.owner.node[{#NAME}]",
+                "value_type": "TEXT",
+                "status": "DISABLED",
+                "discover": "NO_DISCOVER",
+                "preprocessing": [
+                  {
+                    "type": "JSONPATH",
+                    "parameters": [
+                      "$.resources[?(@.name==\"{#NAME}\")].ownerNode.first()"
+                    ]
+                  }
+                ],
+                "master_item": {
+                  "key": "cluster.json"
+                }
+              },
+              {
+                "uuid": "cd71a8c59274476ea959f2537b80c40f",
+                "name": "Cluster resource {#NAME} resource type",
+                "type": "DEPENDENT",
+                "key": "cluster.resource.resource.type[{#NAME}]",
+                "value_type": "TEXT",
+                "status": "DISABLED",
+                "discover": "NO_DISCOVER",
+                "preprocessing": [
+                  {
+                    "type": "JSONPATH",
+                    "parameters": [
+                      "$.resources[?(@.name==\"{#NAME}\")].resourceType.first()"
+                    ]
+                  }
+                ],
+                "master_item": {
+                  "key": "cluster.json"
+                }
+              },
+              {
+                "uuid": "0be349da5eb648cdb03696296a186280",
+                "name": "Cluster resource {#NAME} state",
+                "type": "DEPENDENT",
+                "key": "cluster.resource.state[{#NAME}]",
+                "value_type": "CHAR",
+                "preprocessing": [
+                  {
+                    "type": "JSONPATH",
+                    "parameters": [
+                      "$.resources[?(@.name==\"{#NAME}\")].state.first()"
+                    ]
+                  }
+                ],
+                "master_item": {
+                  "key": "cluster.json"
+                },
+                "trigger_prototypes": [
+                  {
+                    "uuid": "1b1b1066be5b4cf783d11f36c5ebe9f4",
+                    "expression": "last(/Failover Cluster/cluster.resource.state[{#NAME}]) <> \"Online\"",
+                    "name": "Cluster resource {#NAME} state is not healthy",
+                    "opdata": "{ITEM.LASTVALUE1}",
+                    "priority": "HIGH",
+                    "tags": [
+                      {
+                        "tag": "devops",
+                        "value": "alert"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "cluster.json"
+            },
+            "lld_macro_paths": [
+              {
+                "lld_macro": "{#NAME}",
+                "path": "$.name"
+              }
+            ],
+            "preprocessing": [
+              {
+                "type": "JSONPATH",
+                "parameters": ["$.resources"]
+              }
+            ]
+          }
+        ],
+        "macros": [
+          {
+            "macro": "{$CLUSTER.NODE.NOT_MATCHES}",
+            "value": "CHANGE_IF_NEEDED",
+            "description": "E.g. ^(SomeString.*|SomeOtherString.*|AnotherExact)$"
+          },
+          {
+            "macro": "{$CLUSTER.RESOURCE.NOT_MATCHES}",
+            "value": "CHANGE_IF_NEEDED",
+            "description": "E.g. ^(SomeString.*|SomeOtherString.*|AnotherExact)$"
+          }
+        ],
+        "dashboards": [
+          {
+            "uuid": "60c7d7dfe2c8451393e7c422e73cf8c2",
+            "name": "Cluster",
+            "display_period": "10",
+            "auto_start": "NO",
+            "pages": [
+              {
+                "name": "Overview",
+                "widgets": [
+                  {
+                    "type": "itemhistory",
+                    "name": "Event Viewer",
+                    "width": "72",
+                    "height": "11",
+                    "fields": [
+                      {
+                        "type": "ITEM",
+                        "name": "columns.0.itemid",
+                        "value": {
+                          "host": "Failover Cluster",
+                          "key": "eventlog[Microsoft-Windows-FailoverClustering/Diagnostic,,,,^(2050|2051)$,10,skip]"
+                        }
+                      },
+                      {
+                        "type": "STRING",
+                        "name": "columns.0.name",
+                        "value": "Failover/Diagnostic"
+                      },
+                      {
+                        "type": "ITEM",
+                        "name": "columns.1.itemid",
+                        "value": {
+                          "host": "Failover Cluster",
+                          "key": "eventlog[Microsoft-Windows-FailoverClustering/Operational,,,,1650,10,skip]"
+                        }
+                      },
+                      {
+                        "type": "STRING",
+                        "name": "columns.1.name",
+                        "value": "Failover/Operational"
+                      },
+                      {
+                        "type": "STRING",
+                        "name": "reference",
+                        "value": "RZNQL"
+                      },
+                      {
+                        "type": "INTEGER",
+                        "name": "rf_rate",
+                        "value": "30"
+                      },
+                      {
+                        "type": "INTEGER",
+                        "name": "show_column_header",
+                        "value": "1"
+                      },
+                      {
+                        "type": "INTEGER",
+                        "name": "show_lines",
+                        "value": "100"
+                      },
+                      {
+                        "type": "INTEGER",
+                        "name": "show_timestamp",
+                        "value": "1"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

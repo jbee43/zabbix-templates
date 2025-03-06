@@ -1,0 +1,225 @@
+{
+  "zabbix_export": {
+    "version": "7.2",
+    "template_groups": [
+      {
+        "uuid": "7df96b18c230490a9a0a9e2307226338",
+        "name": "Templates"
+      }
+    ],
+    "templates": [
+      {
+        "uuid": "b495e079e3f64fd6a5727e4bbfa068aa",
+        "template": "kubedf",
+        "name": "kubedf",
+        "groups": [
+          {
+            "name": "Templates"
+          }
+        ],
+        "items": [
+          {
+            "uuid": "9c50636e5aec4ebf857883d96085986c",
+            "name": "kubedf",
+            "key": "kubedf",
+            "delay": "5m",
+            "history": "0",
+            "value_type": "TEXT",
+            "preprocessing": [
+              {
+                "type": "JAVASCRIPT",
+                "parameters": [
+                  "var lines = value.split('\\n');\nvar result = [];\n\nfor (var i = 1; i < lines.length; i++) {\n  var parts = lines[i].match(/(.+?)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+(\\d+%)/);\n  var split = parts[1].trim().split('/');\n  \n  result.push({\n    available: parseInt(parts[4], 10),\n    name: split[1],\n\tnamespace: split[0],\n\ttotal: parseInt(parts[2], 10),\n\tused: parseInt(parts[3], 10)\n  });\n}\n\nreturn JSON.stringify(result);"
+                ]
+              }
+            ]
+          }
+        ],
+        "discovery_rules": [
+          {
+            "uuid": "05686de766944a6f8b195d4d8fd7d11b",
+            "name": "PVC discovery",
+            "type": "DEPENDENT",
+            "key": "pvc.discovery",
+            "lifetime": "1d",
+            "item_prototypes": [
+              {
+                "uuid": "2350039978784acf9fbedba283e3d85c",
+                "name": "{#NAMESPACE} {#NAME} available",
+                "type": "DEPENDENT",
+                "key": "pvc.available[{#NAMESPACE}{#NAME}]",
+                "units": "B",
+                "preprocessing": [
+                  {
+                    "type": "JSONPATH",
+                    "parameters": [
+                      "$[?(@.name==\"{#NAME}\"&&@.namespace==\"{#NAMESPACE}\")].available.first()"
+                    ]
+                  },
+                  {
+                    "type": "MULTIPLIER",
+                    "parameters": ["1024"]
+                  }
+                ],
+                "master_item": {
+                  "key": "kubedf"
+                }
+              },
+              {
+                "uuid": "7af8e5d8b2ff4fe6954a068b32abbb5c",
+                "name": "{#NAMESPACE} {#NAME} total",
+                "type": "DEPENDENT",
+                "key": "pvc.total[{#NAMESPACE}{#NAME}]",
+                "units": "B",
+                "preprocessing": [
+                  {
+                    "type": "JSONPATH",
+                    "parameters": [
+                      "$[?(@.name==\"{#NAME}\"&&@.namespace==\"{#NAMESPACE}\")].total.first()"
+                    ]
+                  },
+                  {
+                    "type": "MULTIPLIER",
+                    "parameters": ["1024"]
+                  }
+                ],
+                "master_item": {
+                  "key": "kubedf"
+                }
+              },
+              {
+                "uuid": "c337e69126d94c83b33d7d2475a410be",
+                "name": "{#NAMESPACE} {#NAME} used %",
+                "type": "CALCULATED",
+                "key": "pvc.usedpercent[{#NAMESPACE}{#NAME}]",
+                "delay": "5m",
+                "units": "%",
+                "params": "100 * last(//pvc.used[{#NAMESPACE}{#NAME}]) / last(//pvc.total[{#NAMESPACE}{#NAME}])",
+                "trigger_prototypes": [
+                  {
+                    "uuid": "1befa9c18dbd4446887b81d91463bb8e",
+                    "expression": "last(/kubedf/pvc.usedpercent[{#NAMESPACE}{#NAME}]) > 85",
+                    "name": "{#NAMESPACE} {#NAME} used above 85%",
+                    "opdata": "Last: {ITEM.LASTVALUE1}",
+                    "priority": "WARNING",
+                    "dependencies": [
+                      {
+                        "name": "{#NAMESPACE} {#NAME} used above 90%",
+                        "expression": "last(/kubedf/pvc.usedpercent[{#NAMESPACE}{#NAME}]) > 90"
+                      }
+                    ]
+                  },
+                  {
+                    "uuid": "e5b9743b401b4ff5a1676885982ed397",
+                    "expression": "last(/kubedf/pvc.usedpercent[{#NAMESPACE}{#NAME}]) > 90",
+                    "name": "{#NAMESPACE} {#NAME} used above 90%",
+                    "opdata": "Last: {ITEM.LASTVALUE1}",
+                    "priority": "HIGH"
+                  }
+                ]
+              },
+              {
+                "uuid": "a19b124ce3684cf7b46c3dddc2ddc815",
+                "name": "{#NAMESPACE} {#NAME} used",
+                "type": "DEPENDENT",
+                "key": "pvc.used[{#NAMESPACE}{#NAME}]",
+                "units": "B",
+                "preprocessing": [
+                  {
+                    "type": "JSONPATH",
+                    "parameters": [
+                      "$[?(@.name==\"{#NAME}\"&&@.namespace==\"{#NAMESPACE}\")].used.first()"
+                    ]
+                  },
+                  {
+                    "type": "MULTIPLIER",
+                    "parameters": ["1024"]
+                  }
+                ],
+                "master_item": {
+                  "key": "kubedf"
+                }
+              }
+            ],
+            "graph_prototypes": [
+              {
+                "uuid": "eee2246d86db49099a9cc017a2142485",
+                "name": "{#NAMESPACE} {#NAME} used %",
+                "ymin_type_1": "FIXED",
+                "ymax_type_1": "FIXED",
+                "graph_items": [
+                  {
+                    "color": "8D6E63",
+                    "calc_fnc": "ALL",
+                    "item": {
+                      "host": "kubedf",
+                      "key": "pvc.usedpercent[{#NAMESPACE}{#NAME}]"
+                    }
+                  }
+                ]
+              }
+            ],
+            "master_item": {
+              "key": "kubedf"
+            },
+            "lld_macro_paths": [
+              {
+                "lld_macro": "{#NAMESPACE}",
+                "path": "$.namespace"
+              },
+              {
+                "lld_macro": "{#NAME}",
+                "path": "$.name"
+              }
+            ]
+          }
+        ],
+        "dashboards": [
+          {
+            "uuid": "e933c95f53234b179499991fcada5e48",
+            "name": "kubedf",
+            "display_period": "10",
+            "auto_start": "NO",
+            "pages": [
+              {
+                "name": "Overview",
+                "widgets": [
+                  {
+                    "type": "graphprototype",
+                    "width": "72",
+                    "height": "10",
+                    "fields": [
+                      {
+                        "type": "GRAPH_PROTOTYPE",
+                        "name": "graphid.0",
+                        "value": {
+                          "host": "kubedf",
+                          "name": "{#NAMESPACE} {#NAME} used %"
+                        }
+                      },
+                      {
+                        "type": "STRING",
+                        "name": "reference",
+                        "value": "KNJOZ"
+                      },
+                      {
+                        "type": "INTEGER",
+                        "name": "rf_rate",
+                        "value": "30"
+                      },
+                      {
+                        "type": "INTEGER",
+                        "name": "rows",
+                        "value": "2"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

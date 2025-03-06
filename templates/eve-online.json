@@ -1,0 +1,475 @@
+{
+  "zabbix_export": {
+    "version": "7.2",
+    "template_groups": [
+      {
+        "uuid": "7df96b18c230490a9a0a9e2307226338",
+        "name": "Templates"
+      }
+    ],
+    "templates": [
+      {
+        "uuid": "758daaf7eda2498b9ae5d22e487910d9",
+        "template": "EVE Online by HTTP",
+        "name": "EVE Online by HTTP",
+        "groups": [
+          {
+            "name": "Templates"
+          }
+        ],
+        "items": [
+          {
+            "uuid": "a4ee3c751e6e4515bebd3b51221788a1",
+            "name": "Stats for Faction Warfare",
+            "type": "HTTP_AGENT",
+            "key": "eve.fw.stats",
+            "delay": "15m",
+            "value_type": "TEXT",
+            "status": "DISABLED",
+            "url": "https://esi.evetech.net/latest/fw/stats/",
+            "query_fields": [
+              {
+                "name": "datasource",
+                "value": "tranquility"
+              }
+            ],
+            "follow_redirects": "NO",
+            "output_format": "JSON",
+            "verify_peer": "YES",
+            "verify_host": "YES"
+          },
+          {
+            "uuid": "2917a2b450854dddabb0ea35356e6eae",
+            "name": "Price of PLEX @ Amarr",
+            "type": "HTTP_AGENT",
+            "key": "eve.plex.amarr",
+            "delay": "5m",
+            "value_type": "FLOAT",
+            "units": "ISK",
+            "preprocessing": [
+              {
+                "type": "JSONPATH",
+                "parameters": ["$.body.result.effectivePrices.totalSellPrice"]
+              }
+            ],
+            "url": "https://janice.e-351.com/api/rpc/v1",
+            "query_fields": [
+              {
+                "name": "m",
+                "value": "Appraisal.create"
+              }
+            ],
+            "follow_redirects": "NO",
+            "post_type": "JSON",
+            "posts": "{\n    \"id\": 1,\n    \"method\": \"Appraisal.create\",\n    \"params\": {\n        \"marketId\": 115,\n        \"designation\": 100,\n        \"pricing\": 200,\n        \"pricingVariant\": 100,\n        \"pricePercentage\": 1,\n        \"input\": \"PLEX 1\",\n        \"comment\": \"\",\n        \"compactize\": true\n    }\n}",
+            "request_method": "POST",
+            "output_format": "JSON",
+            "verify_peer": "YES",
+            "verify_host": "YES",
+            "triggers": [
+              {
+                "uuid": "19b010747daa49929087571178049730",
+                "expression": "last(/EVE Online by HTTP/eve.plex.amarr) < {$PLEX.PRICE.MIN}",
+                "name": "Price of PLEX @ Amarr below 6 MISK",
+                "opdata": "Last: {ITEM.LASTVALUE1}",
+                "priority": "INFO"
+              }
+            ]
+          },
+          {
+            "uuid": "48bcb5557a0c4f76b55dd2d9f99afb04",
+            "name": "Price of PLEX @ Dodixie",
+            "type": "HTTP_AGENT",
+            "key": "eve.plex.dodixie",
+            "delay": "5m",
+            "value_type": "FLOAT",
+            "units": "ISK",
+            "preprocessing": [
+              {
+                "type": "JSONPATH",
+                "parameters": ["$.body.result.effectivePrices.totalSellPrice"]
+              }
+            ],
+            "url": "https://janice.e-351.com/api/rpc/v1",
+            "query_fields": [
+              {
+                "name": "m",
+                "value": "Appraisal.create"
+              }
+            ],
+            "follow_redirects": "NO",
+            "post_type": "JSON",
+            "posts": "{\n    \"id\": 1,\n    \"method\": \"Appraisal.create\",\n    \"params\": {\n        \"marketId\": 117,\n        \"designation\": 100,\n        \"pricing\": 200,\n        \"pricingVariant\": 100,\n        \"pricePercentage\": 1,\n        \"input\": \"PLEX 1\",\n        \"comment\": \"\",\n        \"compactize\": true\n    }\n}",
+            "request_method": "POST",
+            "output_format": "JSON",
+            "verify_peer": "YES",
+            "verify_host": "YES",
+            "triggers": [
+              {
+                "uuid": "ea4cbdec78554b9ea31e4204960811d5",
+                "expression": "last(/EVE Online by HTTP/eve.plex.dodixie) < {$PLEX.PRICE.MIN}",
+                "name": "Price of PLEX @ Dodixie below 6 MISK",
+                "opdata": "Last: {ITEM.LASTVALUE1}",
+                "priority": "INFO"
+              }
+            ]
+          },
+          {
+            "uuid": "1bad03a72b194f8daf6a3c22bedc6234",
+            "name": "Price of PLEX @ Hek",
+            "type": "HTTP_AGENT",
+            "key": "eve.plex.hek",
+            "delay": "5m",
+            "value_type": "FLOAT",
+            "units": "ISK",
+            "preprocessing": [
+              {
+                "type": "JSONPATH",
+                "parameters": ["$.body.result.effectivePrices.totalSellPrice"]
+              }
+            ],
+            "url": "https://janice.e-351.com/api/rpc/v1",
+            "query_fields": [
+              {
+                "name": "m",
+                "value": "Appraisal.create"
+              }
+            ],
+            "follow_redirects": "NO",
+            "post_type": "JSON",
+            "posts": "{\n    \"id\": 1,\n    \"method\": \"Appraisal.create\",\n    \"params\": {\n        \"marketId\": 118,\n        \"designation\": 100,\n        \"pricing\": 200,\n        \"pricingVariant\": 100,\n        \"pricePercentage\": 1,\n        \"input\": \"PLEX 1\",\n        \"comment\": \"\",\n        \"compactize\": true\n    }\n}",
+            "request_method": "POST",
+            "output_format": "JSON",
+            "verify_peer": "YES",
+            "verify_host": "YES",
+            "triggers": [
+              {
+                "uuid": "089a7ec97c5b4886a1f3cd070905bf00",
+                "expression": "last(/EVE Online by HTTP/eve.plex.hek) < {$PLEX.PRICE.MIN}",
+                "name": "Price of PLEX @ Hek below 6 MISK",
+                "opdata": "Last: {ITEM.LASTVALUE1}",
+                "priority": "INFO"
+              }
+            ]
+          },
+          {
+            "uuid": "d38ec06dda2c423abb360c8a2f8fb891",
+            "name": "Price of PLEX @ Jita",
+            "type": "HTTP_AGENT",
+            "key": "eve.plex.jita",
+            "delay": "5m",
+            "value_type": "FLOAT",
+            "units": "ISK",
+            "preprocessing": [
+              {
+                "type": "JSONPATH",
+                "parameters": ["$.body.result.effectivePrices.totalSellPrice"]
+              }
+            ],
+            "url": "https://janice.e-351.com/api/rpc/v1",
+            "query_fields": [
+              {
+                "name": "m",
+                "value": "Appraisal.create"
+              }
+            ],
+            "follow_redirects": "NO",
+            "post_type": "JSON",
+            "posts": "{\n    \"id\": 1,\n    \"method\": \"Appraisal.create\",\n    \"params\": {\n        \"marketId\": 2,\n        \"designation\": 100,\n        \"pricing\": 200,\n        \"pricingVariant\": 100,\n        \"pricePercentage\": 1,\n        \"input\": \"PLEX 1\",\n        \"comment\": \"\",\n        \"compactize\": true\n    }\n}",
+            "request_method": "POST",
+            "output_format": "JSON",
+            "verify_peer": "YES",
+            "verify_host": "YES",
+            "triggers": [
+              {
+                "uuid": "88b6cca6de374559901805d6c8d6abe3",
+                "expression": "last(/EVE Online by HTTP/eve.plex.jita) < {$PLEX.PRICE.MIN}",
+                "name": "Price of PLEX @ Jita below 6 MISK",
+                "opdata": "Last: {ITEM.LASTVALUE1}",
+                "priority": "WARNING"
+              }
+            ]
+          },
+          {
+            "uuid": "7e8dd2d40701444890d0d74145aa8872",
+            "name": "Price of PLEX @ MJ-5F9",
+            "type": "HTTP_AGENT",
+            "key": "eve.plex.mj-5f9",
+            "delay": "5m",
+            "value_type": "FLOAT",
+            "units": "ISK",
+            "preprocessing": [
+              {
+                "type": "JSONPATH",
+                "parameters": ["$.body.result.effectivePrices.totalSellPrice"]
+              }
+            ],
+            "url": "https://janice.e-351.com/api/rpc/v1",
+            "query_fields": [
+              {
+                "name": "m",
+                "value": "Appraisal.create"
+              }
+            ],
+            "follow_redirects": "NO",
+            "post_type": "JSON",
+            "posts": "{\n    \"id\": 1,\n    \"method\": \"Appraisal.create\",\n    \"params\": {\n        \"marketId\": 114,\n        \"designation\": 100,\n        \"pricing\": 200,\n        \"pricingVariant\": 100,\n        \"pricePercentage\": 1,\n        \"input\": \"PLEX 1\",\n        \"comment\": \"\",\n        \"compactize\": true\n    }\n}",
+            "request_method": "POST",
+            "output_format": "JSON",
+            "verify_peer": "YES",
+            "verify_host": "YES",
+            "triggers": [
+              {
+                "uuid": "e76c6d63a8344c928d57f1f505d49f2f",
+                "expression": "last(/EVE Online by HTTP/eve.plex.mj-5f9) < {$PLEX.PRICE.MIN}",
+                "name": "Price of PLEX @ MJ-5F9 below 6 MISK",
+                "opdata": "Last: {ITEM.LASTVALUE1}",
+                "priority": "INFO"
+              }
+            ]
+          },
+          {
+            "uuid": "042a971cd14d492193a4503ec9a2caa1",
+            "name": "Price of PLEX @ Rens",
+            "type": "HTTP_AGENT",
+            "key": "eve.plex.rens",
+            "delay": "5m",
+            "value_type": "FLOAT",
+            "units": "ISK",
+            "preprocessing": [
+              {
+                "type": "JSONPATH",
+                "parameters": ["$.body.result.effectivePrices.totalSellPrice"]
+              }
+            ],
+            "url": "https://janice.e-351.com/api/rpc/v1",
+            "query_fields": [
+              {
+                "name": "m",
+                "value": "Appraisal.create"
+              }
+            ],
+            "follow_redirects": "NO",
+            "post_type": "JSON",
+            "posts": "{\n    \"id\": 1,\n    \"method\": \"Appraisal.create\",\n    \"params\": {\n        \"marketId\": 116,\n        \"designation\": 100,\n        \"pricing\": 200,\n        \"pricingVariant\": 100,\n        \"pricePercentage\": 1,\n        \"input\": \"PLEX 1\",\n        \"comment\": \"\",\n        \"compactize\": true\n    }\n}",
+            "request_method": "POST",
+            "output_format": "JSON",
+            "verify_peer": "YES",
+            "verify_host": "YES",
+            "triggers": [
+              {
+                "uuid": "7021642389b34b96b861a8004f8b47cb",
+                "expression": "last(/EVE Online by HTTP/eve.plex.rens) < {$PLEX.PRICE.MIN}",
+                "name": "Price of PLEX @ Rens below 6 MISK",
+                "opdata": "Last: {ITEM.LASTVALUE1}",
+                "priority": "INFO"
+              }
+            ]
+          },
+          {
+            "uuid": "7538f00ee5d04e2595d69857c234942b",
+            "name": "EVE Status",
+            "type": "HTTP_AGENT",
+            "key": "eve.status.description",
+            "delay": "3m",
+            "value_type": "TEXT",
+            "preprocessing": [
+              {
+                "type": "JSONPATH",
+                "parameters": ["$.body.status.description"]
+              }
+            ],
+            "url": "https://status.eveonline.com/api/v2/status.json",
+            "output_format": "JSON",
+            "verify_peer": "YES",
+            "verify_host": "YES",
+            "triggers": [
+              {
+                "uuid": "e002ab134e284014b3424964f81ed067",
+                "expression": "last(/EVE Online by HTTP/eve.status.description) <> \"All Systems Operational\" and (time() < 110000 or time() > 113000)",
+                "name": "Possible issues at the moment, check status.eveonline.com",
+                "opdata": "{ITEM.LASTVALUE1}",
+                "priority": "WARNING"
+              }
+            ]
+          },
+          {
+            "uuid": "49480039cd744c98be13e71c3c43b6a8",
+            "name": "Stats for Player Count",
+            "type": "HTTP_AGENT",
+            "key": "eve.status.playerCount",
+            "delay": "3m",
+            "preprocessing": [
+              {
+                "type": "JSONPATH",
+                "parameters": ["$.body.players"]
+              }
+            ],
+            "url": "https://esi.evetech.net/latest/status",
+            "query_fields": [
+              {
+                "name": "datasource",
+                "value": "tranquility"
+              }
+            ],
+            "follow_redirects": "NO",
+            "output_format": "JSON",
+            "verify_peer": "YES",
+            "verify_host": "YES"
+          }
+        ],
+        "macros": [
+          {
+            "macro": "{$PLEX.PRICE.MIN}",
+            "value": "6000000"
+          }
+        ],
+        "dashboards": [
+          {
+            "uuid": "08274d44b4714f83ad521c20751eede6",
+            "name": "EVE Online",
+            "display_period": "10",
+            "auto_start": "NO",
+            "pages": [
+              {
+                "name": "Overview",
+                "widgets": [
+                  {
+                    "type": "graph",
+                    "name": "Player count",
+                    "width": "72",
+                    "height": "5",
+                    "fields": [
+                      {
+                        "type": "GRAPH",
+                        "name": "graphid.0",
+                        "value": {
+                          "host": "EVE Online by HTTP",
+                          "name": "Player count"
+                        }
+                      },
+                      {
+                        "type": "STRING",
+                        "name": "reference",
+                        "value": "QHMEK"
+                      },
+                      {
+                        "type": "INTEGER",
+                        "name": "rf_rate",
+                        "value": "30"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "graph",
+                    "name": "PLEX prices",
+                    "y": "5",
+                    "width": "72",
+                    "height": "6",
+                    "fields": [
+                      {
+                        "type": "GRAPH",
+                        "name": "graphid.0",
+                        "value": {
+                          "host": "EVE Online by HTTP",
+                          "name": "PLEX prices"
+                        }
+                      },
+                      {
+                        "type": "STRING",
+                        "name": "reference",
+                        "value": "ZBEOV"
+                      },
+                      {
+                        "type": "INTEGER",
+                        "name": "rf_rate",
+                        "value": "30"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "graphs": [
+      {
+        "uuid": "751eed1f40964f5aa424c919c9329cbc",
+        "name": "Player count",
+        "graph_items": [
+          {
+            "drawtype": "GRADIENT_LINE",
+            "color": "66BB6A",
+            "calc_fnc": "ALL",
+            "item": {
+              "host": "EVE Online by HTTP",
+              "key": "eve.status.playerCount"
+            }
+          }
+        ]
+      },
+      {
+        "uuid": "ea1c0d6cd53d429db78fe9be6991e1d0",
+        "name": "PLEX prices",
+        "graph_items": [
+          {
+            "color": "199C0D",
+            "calc_fnc": "ALL",
+            "item": {
+              "host": "EVE Online by HTTP",
+              "key": "eve.plex.amarr"
+            }
+          },
+          {
+            "sortorder": "1",
+            "color": "F63100",
+            "calc_fnc": "ALL",
+            "item": {
+              "host": "EVE Online by HTTP",
+              "key": "eve.plex.dodixie"
+            }
+          },
+          {
+            "sortorder": "2",
+            "color": "2774A4",
+            "calc_fnc": "ALL",
+            "item": {
+              "host": "EVE Online by HTTP",
+              "key": "eve.plex.hek"
+            }
+          },
+          {
+            "sortorder": "3",
+            "drawtype": "BOLD_LINE",
+            "color": "F7941D",
+            "calc_fnc": "ALL",
+            "item": {
+              "host": "EVE Online by HTTP",
+              "key": "eve.plex.jita"
+            }
+          },
+          {
+            "sortorder": "4",
+            "color": "FC6EA3",
+            "calc_fnc": "ALL",
+            "item": {
+              "host": "EVE Online by HTTP",
+              "key": "eve.plex.mj-5f9"
+            }
+          },
+          {
+            "sortorder": "5",
+            "color": "6C59DC",
+            "calc_fnc": "ALL",
+            "item": {
+              "host": "EVE Online by HTTP",
+              "key": "eve.plex.rens"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

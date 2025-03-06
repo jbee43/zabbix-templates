@@ -1,0 +1,215 @@
+{
+  "zabbix_export": {
+    "version": "7.2",
+    "template_groups": [
+      {
+        "uuid": "e960332b3f6c46a1956486d4f3f99fce",
+        "name": "Templates/Server hardware"
+      }
+    ],
+    "templates": [
+      {
+        "uuid": "8b6c36094bcc4442a172e94a6464d167",
+        "template": "Raspberry Pi by Zabbix agent active",
+        "name": "Raspberry Pi by Zabbix agent active",
+        "description": "sudo crontab -e\n* * * * * vcgencmd measure_volts > /tmp/volts.txt\n\nUserParameter=cpu.temperature,cat /sys/class/thermal/thermal_zone0/temp\nUserParameter=pi.volts,cat /tmp/volts.txt",
+        "groups": [
+          {
+            "name": "Templates/Server hardware"
+          }
+        ],
+        "items": [
+          {
+            "uuid": "26be5b99d62a4b35b5ade776c537a8da",
+            "name": "CPU temperature",
+            "type": "ZABBIX_ACTIVE",
+            "key": "cpu.temperature",
+            "delay": "30s",
+            "value_type": "FLOAT",
+            "units": "\u00ba C",
+            "preprocessing": [
+              {
+                "type": "MULTIPLIER",
+                "parameters": ["0.001"]
+              },
+              {
+                "type": "JAVASCRIPT",
+                "parameters": ["return parseFloat(value).toFixed(2);"]
+              }
+            ],
+            "triggers": [
+              {
+                "uuid": "104b3ecc21c54334a04a448de2cd15d9",
+                "expression": "avg(/Raspberry Pi by Zabbix agent active/cpu.temperature, 5m) > {$CPU.TEMPERATURE.AVERAGE}",
+                "name": "CPU temperature > {$CPU.TEMPERATURE.AVERAGE} \u00ba C",
+                "priority": "AVERAGE"
+              },
+              {
+                "uuid": "f96b63d255644861aaa630021c8e3c45",
+                "expression": "avg(/Raspberry Pi by Zabbix agent active/cpu.temperature, 5m) > {$CPU.TEMPERATURE.DISASTER}",
+                "name": "CPU temperature > {$CPU.TEMPERATURE.DISASTER} \u00ba C",
+                "priority": "DISASTER"
+              },
+              {
+                "uuid": "7f19870866ac42e281e9982999bd228b",
+                "expression": "avg(/Raspberry Pi by Zabbix agent active/cpu.temperature, 5m) > {$CPU.TEMPERATURE.HIGH}",
+                "name": "CPU temperature > {$CPU.TEMPERATURE.HIGH} \u00ba C",
+                "priority": "HIGH"
+              },
+              {
+                "uuid": "f49338b89b0d44e8aae41658e4d99d8d",
+                "expression": "avg(/Raspberry Pi by Zabbix agent active/cpu.temperature, 5m) > {$CPU.TEMPERATURE.WARNING}",
+                "name": "CPU temperature > {$CPU.TEMPERATURE.WARNING} \u00ba C",
+                "priority": "WARNING"
+              }
+            ]
+          },
+          {
+            "uuid": "070063a7180f4daa8639bf7a5e2e2d7b",
+            "name": "Voltage",
+            "type": "ZABBIX_ACTIVE",
+            "key": "pi.volts",
+            "value_type": "FLOAT",
+            "trends": "0",
+            "units": "V",
+            "preprocessing": [
+              {
+                "type": "JAVASCRIPT",
+                "parameters": [
+                  "return parseFloat(value.split(\"=\")[1].split(\"V\")[0]).toFixed(2);"
+                ]
+              }
+            ],
+            "triggers": [
+              {
+                "uuid": "60f9123bf2d84b73b1ea31c82180ae35",
+                "expression": "last(/Raspberry Pi by Zabbix agent active/pi.volts) < 0.71",
+                "name": "Voltage under 0.71 V",
+                "opdata": "Last: {ITEM.LASTVALUE1}",
+                "priority": "WARNING"
+              }
+            ]
+          }
+        ],
+        "macros": [
+          {
+            "macro": "{$CPU.TEMPERATURE.AVERAGE}",
+            "value": "80"
+          },
+          {
+            "macro": "{$CPU.TEMPERATURE.DISASTER}",
+            "value": "90"
+          },
+          {
+            "macro": "{$CPU.TEMPERATURE.HIGH}",
+            "value": "85"
+          },
+          {
+            "macro": "{$CPU.TEMPERATURE.WARNING}",
+            "value": "78"
+          }
+        ],
+        "dashboards": [
+          {
+            "uuid": "68603421a52d40ca8458c0e204ea2162",
+            "name": "Raspberry Pi",
+            "display_period": "10",
+            "auto_start": "NO",
+            "pages": [
+              {
+                "name": "Overview",
+                "widgets": [
+                  {
+                    "type": "graph",
+                    "name": "CPU temperature",
+                    "width": "72",
+                    "height": "6",
+                    "fields": [
+                      {
+                        "type": "GRAPH",
+                        "name": "graphid.0",
+                        "value": {
+                          "host": "Raspberry Pi by Zabbix agent active",
+                          "name": "CPU temperature"
+                        }
+                      },
+                      {
+                        "type": "STRING",
+                        "name": "reference",
+                        "value": "EKHOD"
+                      },
+                      {
+                        "type": "INTEGER",
+                        "name": "rf_rate",
+                        "value": "30"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "graph",
+                    "name": "Voltage",
+                    "y": "6",
+                    "width": "72",
+                    "height": "5",
+                    "fields": [
+                      {
+                        "type": "GRAPH",
+                        "name": "graphid.0",
+                        "value": {
+                          "host": "Raspberry Pi by Zabbix agent active",
+                          "name": "Voltage"
+                        }
+                      },
+                      {
+                        "type": "STRING",
+                        "name": "reference",
+                        "value": "QWZEA"
+                      },
+                      {
+                        "type": "INTEGER",
+                        "name": "rf_rate",
+                        "value": "30"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "graphs": [
+      {
+        "uuid": "646aeb092098495193da035143786a14",
+        "name": "CPU temperature",
+        "graph_items": [
+          {
+            "drawtype": "GRADIENT_LINE",
+            "color": "FF6F00",
+            "calc_fnc": "ALL",
+            "item": {
+              "host": "Raspberry Pi by Zabbix agent active",
+              "key": "cpu.temperature"
+            }
+          }
+        ]
+      },
+      {
+        "uuid": "c193e8aa99044371bff7e9036e4fea96",
+        "name": "Voltage",
+        "graph_items": [
+          {
+            "drawtype": "GRADIENT_LINE",
+            "color": "00ACC1",
+            "calc_fnc": "ALL",
+            "item": {
+              "host": "Raspberry Pi by Zabbix agent active",
+              "key": "pi.volts"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
